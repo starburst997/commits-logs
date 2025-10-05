@@ -1,0 +1,387 @@
+name: "Commits Log & Release"
+description: "Generate changelog from commits between releases and optionally create a GitHub release"
+author: "JD Boivin"
+
+branding:
+  icon: "git-commit"
+  color: "blue"
+
+inputs:
+  # Tag filtering inputs
+  from-tag:
+    description: "Starting tag for changelog (optional, will auto-detect latest vX.Y.Z tag if not provided)"
+    required: false
+    default: ""
+
+  to-tag:
+    description: "Ending tag for changelog (optional, defaults to HEAD)"
+    required: false
+    default: "HEAD"
+
+  # Changelog inputs
+  format:
+    description: 'Changelog format: "simple" (one line per commit) or "grouped" (grouped by type)'
+    required: false
+    default: "simple"
+
+  include-merge-commits:
+    description: "Include merge commits in changelog"
+    required: false
+    default: "false"
+
+  changelog-title:
+    description: "Title for the changelog section"
+    required: false
+    default: "## Changes"
+
+  # Release inputs
+  create-tag:
+    description: "Create a new tag (auto-increments from latest tag)"
+    required: false
+    default: "false"
+
+  version-bump:
+    description: 'Version bump type when auto-incrementing: "patch", "minor", or "major"'
+    required: false
+    default: "patch"
+
+  new-tag:
+    description: "Tag name for new release (only used if create-tag is true). Auto-increments if not provided."
+    required: false
+    default: ""
+
+  create-release:
+    description: "Create a GitHub release"
+    required: false
+    default: "false"
+
+  token:
+    description: "GitHub token for creating releases"
+    required: false
+    default: ${{ github.token }}
+
+  # ncipollo/release-action pass-through inputs
+  release-name:
+    description: "Release name. Supports {tag} variable"
+    required: false
+    default: "Release {tag}"
+
+  release-body:
+    description: "Release body text. If empty, uses generated changelog"
+    required: false
+    default: ""
+
+  draft:
+    description: "Create a draft release"
+    required: false
+    default: "false"
+
+  prerelease:
+    description: "Mark as a prerelease"
+    required: false
+    default: "false"
+
+  make-latest:
+    description: "Mark as latest release"
+    required: false
+    default: "true"
+
+  generate-release-notes:
+    description: "Use GitHub automatic release notes generation in addition to changelog"
+    required: false
+    default: "false"
+
+  artifacts:
+    description: "Newline-delimited list of artifact paths to upload"
+    required: false
+    default: ""
+
+  artifact-content-type:
+    description: "Content type for artifacts"
+    required: false
+    default: "application/octet-stream"
+
+  commit:
+    description: "Commit to tag for release creation"
+    required: false
+    default: ""
+
+  discussion-category-name:
+    description: "Create a discussion in the specified category"
+    required: false
+    default: ""
+
+outputs:
+  changelog:
+    description: "Generated changelog content"
+    value: ${{ steps.generate.outputs.changelog }}
+
+  changelog-file:
+    description: "Path to the changelog file"
+    value: ${{ steps.generate.outputs.changelog_file }}
+
+  from-tag:
+    description: "Tag used as starting point for changelog"
+    value: ${{ steps.get-tags.outputs.from_tag }}
+
+  to-tag:
+    description: "Tag used as ending point for changelog"
+    value: ${{ steps.get-tags.outputs.to_tag }}
+
+  new-tag:
+    description: "New tag that was created (if create-tag is true)"
+    value: ${{ steps.create-new-tag.outputs.new_tag }}
+
+  release-id:
+    description: "ID of the created release (only if create-release is true)"
+    value: ${{ steps.release.outputs.id }}
+
+  release-url:
+    description: "URL of the created release (only if create-release is true)"
+    value: ${{ steps.release.outputs.html_url }}
+
+  release-upload-url:
+    description: "Upload URL for the release (only if create-release is true)"
+    value: ${{ steps.release.outputs.upload_url }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Get tags for changelog
+      id: get-tags
+      shell: bash
+      env:
+        INPUT_FROM_TAG: ${{ inputs.from-tag }}
+        INPUT_TO_TAG: ${{ inputs.to-tag }}
+        CREATE_TAG: ${{ inputs.create-tag }}
+      run: |
+        # Fetch all tags
+        git fetch --tags --quiet 2>/dev/null || true
+
+        # Get all tags matching vX.Y.Z format, sorted by version
+        ALL_TAGS=$(git tag -l "v*.*.*" | sort -V)
+
+        # Determine FROM and TO tags based on create-tag setting
+        if [ "$CREATE_TAG" = "false" ]; then
+          # When not creating a tag, intelligently detect the range
+
+          if [ -n "$INPUT_FROM_TAG" ] && [ -n "$INPUT_TO_TAG" ]; then
+            # Both tags provided manually
+            FROM_TAG="$INPUT_FROM_TAG"
+            TO_TAG="$INPUT_TO_TAG"
+            echo "Using provided tags: $FROM_TAG to $TO_TAG"
+          elif [ -n "$INPUT_FROM_TAG" ]; then
+            # Only from-tag provided, use latest tag as to-tag
+            FROM_TAG="$INPUT_FROM_TAG"
+            TO_TAG=$(echo "$ALL_TAGS" | tail -n 1)
+            echo "Using provided from-tag: $FROM_TAG to latest tag: $TO_TAG"
+          else
+            # Auto-detect based on whether HEAD is tagged
+            LATEST_TAG=$(echo "$ALL_TAGS" | tail -n 1)
+            PREVIOUS_TAG=$(echo "$ALL_TAGS" | tail -n 2 | head -n 1)
+
+            if [ -z "$LATEST_TAG" ]; then
+              echo "No vX.Y.Z tags found, using all commits"
+              FROM_TAG=""
+              TO_TAG="HEAD"
+            elif [ -z "$PREVIOUS_TAG" ]; then
+              echo "Only one tag found, using all commits up to HEAD"
+              FROM_TAG="$LATEST_TAG"
+              TO_TAG="HEAD"
+            else
+              # Check if latest tag points to HEAD
+              LATEST_TAG_SHA=$(git rev-parse "$LATEST_TAG" 2>/dev/null)
+              HEAD_SHA=$(git rev-parse HEAD)
+
+              if [ "$LATEST_TAG_SHA" = "$HEAD_SHA" ]; then
+                # Latest tag is at HEAD, use two most recent tags
+                FROM_TAG="$PREVIOUS_TAG"
+                TO_TAG="$LATEST_TAG"
+                echo "Latest tag ($LATEST_TAG) is at HEAD, using two most recent tags: $FROM_TAG to $TO_TAG"
+              else
+                # HEAD has new commits, use latest tag to HEAD
+                FROM_TAG="$LATEST_TAG"
+                TO_TAG="HEAD"
+                echo "HEAD has commits since $LATEST_TAG, using: $FROM_TAG to HEAD"
+              fi
+            fi
+          fi
+        else
+          # When creating a tag, use latest tag to HEAD
+          if [ -n "$INPUT_FROM_TAG" ]; then
+            FROM_TAG="$INPUT_FROM_TAG"
+            echo "Using provided from-tag: $FROM_TAG"
+          else
+            # Get the latest vX.Y.Z tag
+            FROM_TAG=$(echo "$ALL_TAGS" | tail -n 1)
+            if [ -z "$FROM_TAG" ]; then
+              echo "No vX.Y.Z tags found, using all commits"
+              FROM_TAG=""
+            else
+              echo "Auto-detected from-tag: $FROM_TAG"
+            fi
+          fi
+
+          # TO tag is always HEAD when creating a new tag
+          TO_TAG="HEAD"
+          echo "Using HEAD as to-tag (creating new tag)"
+        fi
+
+        echo "from_tag=$FROM_TAG" >> $GITHUB_OUTPUT
+        echo "to_tag=$TO_TAG" >> $GITHUB_OUTPUT
+
+        # Also export for use in next step
+        echo "FROM_TAG=$FROM_TAG" >> $GITHUB_ENV
+        echo "TO_TAG=$TO_TAG" >> $GITHUB_ENV
+
+    - name: Generate changelog
+      id: generate
+      shell: bash
+      env:
+        FORMAT: ${{ inputs.format }}
+        INCLUDE_MERGE: ${{ inputs.include-merge-commits }}
+        CHANGELOG_TITLE: ${{ inputs.changelog-title }}
+      run: |
+        # Determine commit range
+        if [ -z "$FROM_TAG" ]; then
+          echo "No previous tag found, using all commits"
+          RANGE="$TO_TAG"
+        else
+          echo "Getting commits from $FROM_TAG to $TO_TAG"
+          RANGE="${FROM_TAG}..${TO_TAG}"
+        fi
+
+        # Build git log command
+        NO_MERGES=""
+        if [ "$INCLUDE_MERGE" = "false" ]; then
+          NO_MERGES="--no-merges"
+        fi
+
+        # Get commits
+        if [ "$FORMAT" = "grouped" ]; then
+          # Grouped format (by conventional commit type)
+          COMMITS=$(git log $RANGE --pretty=format:"%s|%h" $NO_MERGES | awk -F'|' '
+            BEGIN {
+              features=""
+              fixes=""
+              docs=""
+              chores=""
+              others=""
+            }
+            /^feat(\(.*\))?:/ { features = features "- " substr($1, index($1, ":")+2) " (" $2 ")\n"; next }
+            /^fix(\(.*\))?:/ { fixes = fixes "- " substr($1, index($1, ":")+2) " (" $2 ")\n"; next }
+            /^docs(\(.*\))?:/ { docs = docs "- " substr($1, index($1, ":")+2) " (" $2 ")\n"; next }
+            /^chore(\(.*\))?:/ { chores = chores "- " substr($1, index($1, ":")+2) " (" $2 ")\n"; next }
+            { others = others "- " $1 " (" $2 ")\n" }
+            END {
+              if (features) print "\n### Features\n" features
+              if (fixes) print "\n### Bug Fixes\n" fixes
+              if (docs) print "\n### Documentation\n" docs
+              if (chores) print "\n### Chores\n" chores
+              if (others) print "\n### Other Changes\n" others
+            }
+          ')
+        else
+          # Simple format
+          COMMITS=$(git log $RANGE --pretty=format:"- %s (%h)" $NO_MERGES)
+        fi
+
+        # Handle no commits case
+        if [ -z "$COMMITS" ]; then
+          COMMITS="- No changes"
+        fi
+
+        # Create changelog
+        CHANGELOG="${CHANGELOG_TITLE}
+        ${COMMITS}"
+
+        # Save to file
+        echo "$CHANGELOG" > CHANGELOG.md
+        echo "Changelog generated at CHANGELOG.md"
+
+        # Set outputs
+        echo "changelog_file=CHANGELOG.md" >> $GITHUB_OUTPUT
+
+        # Output changelog (handle multiline)
+        {
+          echo 'changelog<<EOF'
+          echo "$CHANGELOG"
+          echo 'EOF'
+        } >> $GITHUB_OUTPUT
+
+    - name: Create new tag
+      id: create-new-tag
+      if: inputs.create-tag == 'true'
+      shell: bash
+      env:
+        INPUT_NEW_TAG: ${{ inputs.new-tag }}
+        VERSION_BUMP: ${{ inputs.version-bump }}
+      run: |
+        # Get all tags matching vX.Y.Z format, sorted by version
+        ALL_TAGS=$(git tag -l "v*.*.*" | sort -V)
+        LATEST_TAG=$(echo "$ALL_TAGS" | tail -n 1)
+
+        # Determine new tag
+        if [ -n "$INPUT_NEW_TAG" ]; then
+          NEW_TAG="$INPUT_NEW_TAG"
+          echo "Using provided new tag: $NEW_TAG"
+        else
+          # Auto-increment from latest tag
+          if [ -z "$LATEST_TAG" ]; then
+            NEW_TAG="v0.1.0"
+            echo "No existing tags, creating: $NEW_TAG"
+          else
+            # Parse version
+            VERSION=${LATEST_TAG#v}
+            IFS='.' read -r -a VERSION_PARTS <<< "$VERSION"
+            MAJOR=${VERSION_PARTS[0]:-0}
+            MINOR=${VERSION_PARTS[1]:-0}
+            PATCH=${VERSION_PARTS[2]:-0}
+
+            # Increment based on version-bump type
+            case "$VERSION_BUMP" in
+              major)
+                MAJOR=$((MAJOR + 1))
+                MINOR=0
+                PATCH=0
+                echo "Major version bump: $LATEST_TAG → v${MAJOR}.${MINOR}.${PATCH}"
+                ;;
+              minor)
+                MINOR=$((MINOR + 1))
+                PATCH=0
+                echo "Minor version bump: $LATEST_TAG → v${MAJOR}.${MINOR}.${PATCH}"
+                ;;
+              patch|*)
+                PATCH=$((PATCH + 1))
+                echo "Patch version bump: $LATEST_TAG → v${MAJOR}.${MINOR}.${PATCH}"
+                ;;
+            esac
+
+            NEW_TAG="v${MAJOR}.${MINOR}.${PATCH}"
+          fi
+        fi
+
+        # Create the tag
+        git tag "$NEW_TAG"
+        git push origin "$NEW_TAG"
+        echo "Created and pushed tag: $NEW_TAG"
+
+        echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
+
+    - name: Create release
+      id: release
+      if: inputs.create-release == 'true'
+      uses: ncipollo/release-action@v1
+      with:
+        token: ${{ inputs.token }}
+        tag: ${{ steps.create-new-tag.outputs.new_tag || inputs.to-tag }}
+        name: ${{ inputs.release-name }}
+        body: ${{ inputs.release-body != '' && inputs.release-body || steps.generate.outputs.changelog }}
+        draft: ${{ inputs.draft }}
+        prerelease: ${{ inputs.prerelease }}
+        makeLatest: ${{ inputs.make-latest }}
+        generateReleaseNotes: ${{ inputs.generate-release-notes }}
+        artifacts: ${{ inputs.artifacts }}
+        artifactContentType: ${{ inputs.artifact-content-type }}
+        commit: ${{ inputs.commit }}
+        discussionCategoryName: ${{ inputs.discussion-category-name }}
