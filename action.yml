@@ -16,7 +16,7 @@ inputs:
   to-tag:
     description: "Ending tag for changelog (optional, defaults to HEAD)"
     required: false
-    default: "HEAD"
+    default: ""
 
   # Changelog inputs
   format:
@@ -103,11 +103,6 @@ inputs:
 
   commit:
     description: "Commit to tag for release creation"
-    required: false
-    default: ""
-
-  discussion-category-name:
-    description: "Create a discussion in the specified category"
     required: false
     default: ""
 
@@ -280,11 +275,20 @@ runs:
             /^chore(\(.*\))?:/ { chores = chores "- " substr($1, index($1, ":")+2) " (" $2 ")\n"; next }
             { others = others "- " $1 " (" $2 ")\n" }
             END {
+              has_categories = 0
+              if (features) has_categories = 1
+              if (fixes) has_categories = 1
+              if (docs) has_categories = 1
+              if (chores) has_categories = 1
+
               if (features) print "\n### Features\n" features
               if (fixes) print "\n### Bug Fixes\n" fixes
               if (docs) print "\n### Documentation\n" docs
               if (chores) print "\n### Chores\n" chores
-              if (others) print "\n### Other Changes\n" others
+              if (others) {
+                if (has_categories) print "\n### Other Changes\n" others
+                else print "\n" others
+              }
             }
           ')
         else
@@ -390,4 +394,3 @@ runs:
         artifacts: ${{ inputs.artifacts }}
         artifactContentType: ${{ inputs.artifact-content-type }}
         commit: ${{ inputs.commit }}
-        discussionCategoryName: ${{ inputs.discussion-category-name }}
