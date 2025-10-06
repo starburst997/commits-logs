@@ -62,9 +62,9 @@ inputs:
 
   # ncipollo/release-action pass-through inputs
   release-name:
-    description: "Release name. Supports {tag} variable"
+    description: "Release name."
     required: false
-    default: "Release {tag}"
+    default: ""
 
   release-body:
     description: "Release body text. If empty, uses generated changelog"
@@ -122,6 +122,10 @@ outputs:
   to-tag:
     description: "Tag used as ending point for changelog"
     value: ${{ steps.get-tags.outputs.to_tag }}
+
+  release-tag:
+    description: "Tag without 'v' prefix for release name"
+    value: ${{ steps.get-tags.outputs.release_tag }}
 
   new-tag:
     description: "New tag that was created (if create-tag is true)"
@@ -224,6 +228,14 @@ runs:
 
         echo "from_tag=$FROM_TAG" >> $GITHUB_OUTPUT
         echo "to_tag=$TO_TAG" >> $GITHUB_OUTPUT
+
+        # Generate release_tag (tag without 'v' prefix) for release name
+        if [ "$TO_TAG" = "HEAD" ]; then
+          RELEASE_TAG=""
+        else
+          RELEASE_TAG="${TO_TAG#v}"
+        fi
+        echo "release_tag=$RELEASE_TAG" >> $GITHUB_OUTPUT
 
         # Also export for use in next step
         echo "FROM_TAG=$FROM_TAG" >> $GITHUB_ENV
@@ -376,7 +388,9 @@ runs:
         git push origin "$NEW_TAG"
         echo "Created and pushed tag: $NEW_TAG"
 
+        # Output tag with and without 'v' prefix
         echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
+        echo "release_tag=${NEW_TAG#v}" >> $GITHUB_OUTPUT
 
     - name: Create release
       id: release
@@ -385,7 +399,7 @@ runs:
       with:
         token: ${{ inputs.token }}
         tag: ${{ steps.create-new-tag.outputs.new_tag || inputs.to-tag || steps.get-tags.outputs.to_tag }}
-        name: ${{ inputs.release-name }}
+        name: ${{ inputs.release-name != '' && inputs.release-name || format('Release {0}', steps.create-new-tag.outputs.release_tag || steps.get-tags.outputs.release_tag) }}
         body: ${{ inputs.release-body != '' && inputs.release-body || steps.generate.outputs.changelog }}
         draft: ${{ inputs.draft }}
         prerelease: ${{ inputs.prerelease }}
