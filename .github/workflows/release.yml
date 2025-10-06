@@ -1,0 +1,24 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Version and Tag
+        id: version
+        uses: starburst997/auto-version@v1
+
+      - name: Generate changelog and create release
+        uses: ./
+        with:
+          format: grouped
+          create-release: true
