@@ -86,8 +86,12 @@ jobs:
 | `draft`                 | Create draft release                                      | `false`         |
 | `prerelease`            | Mark as prerelease                                        | `false`         |
 | `make-latest`           | Mark as latest                                            | `true`          |
-
-**Note:** All inputs from [ncipollo/release-action](https://github.com/ncipollo/release-action) are supported. See their docs for additional options like `artifacts`, `generate-release-notes`, `discussion-category-name`, etc.
+| `generate-release-notes`| Use GitHub's automatic release notes                      | `false`         |
+| `artifacts`             | Newline-delimited list of artifact paths                  | _(none)_        |
+| `artifact-content-type` | Content type for artifacts                                | `application/octet-stream` |
+| `commit`                | Commit to tag for release                                 | _(current)_     |
+| `discussion-category-name` | Create discussion in specified category                | _(none)_        |
+| `token`                 | GitHub token for releases                                 | `${{ github.token }}` |
 
 ## Outputs
 
