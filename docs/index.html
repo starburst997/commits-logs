@@ -1,431 +1,382 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Commits Log & Release - GitHub Action</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+
+      .hero-background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        z-index: -1;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+
+      header {
+        padding: 2rem 0;
+        text-align: center;
+        color: white;
+      }
+
+      .hero {
+        padding: 4rem 0 6rem;
+        text-align: center;
+        color: white;
+      }
+
+      h1 {
+        font-size: 3.5rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        background: linear-gradient(to right, #fff, rgba(255, 255, 255, 0.9));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .tagline {
+        font-size: 1.5rem;
+        margin-bottom: 2rem;
+        opacity: 0.95;
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 2.5rem;
+      }
+
+      .btn {
+        display: inline-block;
+        padding: 0.875rem 2rem;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        font-size: 1.1rem;
+      }
+
+      .btn-primary {
+        background: white;
+        color: #667eea;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+      }
+
+      .btn-secondary {
+        background: transparent;
+        color: white;
+        border: 2px solid white;
+      }
+
+      .btn-secondary:hover {
+        background: white;
+        color: #667eea;
+      }
+
+      .features-section {
+        background: white;
+        border-radius: 20px 20px 0 0;
+        padding: 5rem 0;
+        margin-top: -2rem;
+        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.1);
+      }
+
+      .features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 2.5rem;
+        margin-top: 3rem;
+      }
+
+      .feature {
+        text-align: center;
+        padding: 1.5rem;
+      }
+
+      .feature-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 1.5rem;
+        color: white;
+      }
+
+      .feature h3 {
+        font-size: 1.3rem;
+        margin-bottom: 1rem;
+        color: #333;
+      }
+
+      .feature p {
+        color: #666;
+        line-height: 1.7;
+      }
+
+      .section-title {
+        text-align: center;
+        font-size: 2.5rem;
+        color: #333;
+        margin-bottom: 1rem;
+      }
+
+      .section-subtitle {
+        text-align: center;
+        color: #666;
+        font-size: 1.2rem;
+        max-width: 600px;
+        margin: 0 auto;
+      }
+
+      .usage-section {
+        padding: 5rem 0;
+        background: white;
+      }
+
+      .code-block {
+        background: #1e1e1e;
+        color: #d4d4d4;
+        padding: 1.5rem;
+        border-radius: 10px;
+        overflow-x: auto;
+        margin-top: 2rem;
+        font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        white-space: pre;
+      }
+
+      .code-block .comment {
+        color: #6a9955;
+      }
+
+      .code-block .keyword {
+        color: #c586c0;
+      }
+
+      .code-block .key {
+        color: #9cdcfe;
+      }
+
+      .code-block .value {
+        color: #ce9178;
+      }
+
+      .docs-section {
+        padding: 5rem 0;
+        background: #f8f9fa;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 2rem;
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      }
+
+      th {
+        background: #667eea;
+        color: white;
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+      }
+
+      td {
+        padding: 1rem;
+        border-bottom: 1px solid #e0e0e0;
+      }
+
+      tr:last-child td {
+        border-bottom: none;
+      }
+
+      tr:hover {
+        background: #f8f9fa;
+      }
+
+      code {
+        background: #f8f9fa;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+        font-size: 0.9em;
+        color: #667eea;
+      }
+
+      footer {
+        background: #f8f9fa;
+        padding: 3rem 0;
+        text-align: center;
+        color: #666;
+      }
+
+      footer a {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      footer a:hover {
+        text-decoration: underline;
+      }
+
+      @media (max-width: 768px) {
+        h1 {
+          font-size: 2.5rem;
         }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-            min-height: 100vh;
-            padding: 2rem;
-        }
-
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.98);
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 3rem 2rem;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-            font-weight: 700;
-        }
-
-        .header p {
-            font-size: 1.2rem;
-            opacity: 0.95;
-        }
-
-        .content {
-            padding: 3rem 2rem;
-        }
-
-        .section {
-            margin-bottom: 3rem;
-        }
-
-        .section h2 {
-            color: #667eea;
-            font-size: 1.8rem;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 3px solid #667eea;
+        .tagline {
+          font-size: 1.2rem;
         }
 
         .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-top: 1.5rem;
-        }
-
-        .feature {
-            padding: 1.5rem;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            border-radius: 10px;
-            border-left: 4px solid #667eea;
-        }
-
-        .feature h3 {
-            color: #764ba2;
-            margin-bottom: 0.5rem;
-            font-size: 1.1rem;
-        }
-
-        .code-block {
-            background: #1e1e1e;
-            color: #d4d4d4;
-            padding: 1.5rem;
-            border-radius: 10px;
-            overflow-x: auto;
-            margin: 1rem 0;
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            font-size: 0.9rem;
-            line-height: 1.5;
-        }
-
-        .code-block .comment {
-            color: #6a9955;
-        }
-
-        .code-block .key {
-            color: #9cdcfe;
-        }
-
-        .code-block .value {
-            color: #ce9178;
-        }
-
-        .code-block .keyword {
-            color: #c586c0;
+          grid-template-columns: 1fr;
+          gap: 2rem;
         }
 
         table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1rem 0;
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+          font-size: 0.9rem;
         }
 
-        th {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 1rem;
-            text-align: left;
-            font-weight: 600;
-        }
-
+        th,
         td {
-            padding: 1rem;
-            border-bottom: 1px solid #e0e0e0;
+          padding: 0.75rem;
         }
-
-        tr:last-child td {
-            border-bottom: none;
-        }
-
-        tr:hover {
-            background: #f5f7fa;
-        }
-
-        code {
-            background: #f5f7fa;
-            padding: 0.2rem 0.5rem;
-            border-radius: 4px;
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            font-size: 0.9em;
-            color: #764ba2;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 0.3rem 0.8rem;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-right: 0.5rem;
-        }
-
-        .links {
-            text-align: center;
-            padding: 2rem;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        }
-
-        .links a {
-            display: inline-block;
-            margin: 0 1rem;
-            padding: 0.8rem 2rem;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-decoration: none;
-            border-radius: 25px;
-            font-weight: 600;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .links a:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        @media (max-width: 768px) {
-            body {
-                padding: 1rem;
-            }
-
-            .header h1 {
-                font-size: 2rem;
-            }
-
-            .header p {
-                font-size: 1rem;
-            }
-
-            .content {
-                padding: 2rem 1.5rem;
-            }
-
-            .features {
-                grid-template-columns: 1fr;
-            }
-
-            .code-block {
-                font-size: 0.8rem;
-                padding: 1rem;
-            }
-
-            table {
-                font-size: 0.9rem;
-            }
-
-            th, td {
-                padding: 0.75rem;
-            }
-        }
+      }
     </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🏷️ Commits Log & Release</h1>
-            <p>Generate changelogs from commits and create GitHub releases automatically</p>
+  </head>
+  <body>
+    <div class="hero-background"></div>
+
+    <header>
+      <div class="container">
+        <nav>
+          <a
+            href="https://github.com/starburst997/commits-logs"
+            class="btn btn-secondary"
+          >
+            View on GitHub →
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="container">
+        <h1>Commits Log & Release</h1>
+        <p class="tagline">
+          Generate changelogs from commits between releases and automatically
+          create GitHub releases
+        </p>
+      </div>
+    </section>
+
+    <section class="features-section">
+      <div class="container">
+        <h2 class="section-title">Key Features</h2>
+        <p class="section-subtitle">
+          Streamline your release workflow with intelligent changelog generation
+        </p>
+
+        <div class="features">
+          <div class="feature">
+            <div class="feature-icon">🏷️</div>
+            <h3>Smart Tag Detection</h3>
+            <p>
+              Automatically detects version tags and commit ranges to generate
+              changelogs with zero configuration
+            </p>
+          </div>
+
+          <div class="feature">
+            <div class="feature-icon">📝</div>
+            <h3>Flexible Formatting</h3>
+            <p>
+              Simple or grouped changelog formats with support for conventional
+              commits and custom titles
+            </p>
+          </div>
+
+          <div class="feature">
+            <div class="feature-icon">🚀</div>
+            <h3>Complete Release Automation</h3>
+            <p>
+              Create tags, GitHub releases, and upload artifacts in a single
+              workflow step
+            </p>
+          </div>
         </div>
+      </div>
+    </section>
 
-        <div class="content">
-            <div class="section">
-                <h2>Features</h2>
-                <div class="features">
-                    <div class="feature">
-                        <h3>🏷️ Smart Tag Filtering</h3>
-                        <p>Automatically finds latest vX.Y.Z tags or specify manually</p>
-                    </div>
-                    <div class="feature">
-                        <h3>📝 Changelog Generation</h3>
-                        <p>Generate from commits between two tags with customizable formats</p>
-                    </div>
-                    <div class="feature">
-                        <h3>🚀 Release Creation</h3>
-                        <p>Optionally create GitHub releases with generated changelog</p>
-                    </div>
-                    <div class="feature">
-                        <h3>📊 Two Formats</h3>
-                        <p>Simple list or grouped by conventional commit types</p>
-                    </div>
-                </div>
-            </div>
+    <section class="usage-section">
+      <div class="container">
+        <h2 class="section-title">Quick Start</h2>
+        <p class="section-subtitle">Get started in minutes</p>
 
-            <div class="section">
-                <h2>Quick Start</h2>
-                <p>Basic usage - generate changelog only:</p>
-                <div class="code-block">- <span class="key">uses</span>: <span class="value">starburst997/commits-logs@v1</span>
+        <h3 style="margin-top: 3rem; font-size: 1.8rem; color: #333">
+          Basic Usage - Generate Changelog Only
+        </h3>
+        <div class="code-block">- <span class="key">uses</span>: <span class="value">starburst997/commits-logs@v1</span>
   <span class="key">id</span>: <span class="value">changelog</span>
 
 - <span class="key">run</span>: <span class="value">echo "${{ steps.changelog.outputs.changelog }}"</span></div>
 
-                <p>Create release with changelog:</p>
-                <div class="code-block">- <span class="key">uses</span>: <span class="value">starburst997/commits-logs@v1</span>
+        <h3 style="margin-top: 3rem; font-size: 1.8rem; color: #333">
+          Create Release with Changelog
+        </h3>
+        <div class="code-block">- <span class="key">uses</span>: <span class="value">starburst997/commits-logs@v1</span>
   <span class="keyword">with</span>:
     <span class="key">create-release</span>: <span class="value">true</span>
     <span class="key">create-tag</span>: <span class="value">true</span></div>
-            </div>
 
-            <div class="section">
-                <h2>Inputs</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Input</th>
-                            <th>Description</th>
-                            <th>Default</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><code>from-tag</code></td>
-                            <td>Starting tag (auto-detects latest vX.Y.Z if not provided)</td>
-                            <td><em>(auto)</em></td>
-                        </tr>
-                        <tr>
-                            <td><code>to-tag</code></td>
-                            <td>Ending tag/ref</td>
-                            <td><code>HEAD</code></td>
-                        </tr>
-                        <tr>
-                            <td><code>format</code></td>
-                            <td>Changelog format: <code>simple</code> or <code>grouped</code></td>
-                            <td><code>simple</code></td>
-                        </tr>
-                        <tr>
-                            <td><code>include-merge-commits</code></td>
-                            <td>Include merge commits in changelog</td>
-                            <td><code>false</code></td>
-                        </tr>
-                        <tr>
-                            <td><code>changelog-title</code></td>
-                            <td>Title for the changelog section</td>
-                            <td><code>## Changes</code></td>
-                        </tr>
-                        <tr>
-                            <td><code>create-tag</code></td>
-                            <td>Create a new tag (auto-increments from latest)</td>
-                            <td><code>false</code></td>
-                        </tr>
-                        <tr>
-                            <td><code>version-bump</code></td>
-                            <td>Version bump type: <code>patch</code>, <code>minor</code>, or <code>major</code></td>
-                            <td><code>patch</code></td>
-                        </tr>
-                        <tr>
-                            <td><code>new-tag</code></td>
-                            <td>Tag name for new release (auto-increments if not provided)</td>
-                            <td><em>(auto)</em></td>
-                        </tr>
-                        <tr>
-                            <td><code>create-release</code></td>
-                            <td>Create a GitHub release</td>
-                            <td><code>false</code></td>
-                        </tr>
-                        <tr>
-                            <td><code>release-name</code></td>
-                            <td>Release name (supports <code>{tag}</code> variable)</td>
-                            <td><code>Release {tag}</code></td>
-                        </tr>
-                        <tr>
-                            <td><code>release-body</code></td>
-                            <td>Custom release body (uses changelog if empty)</td>
-                            <td><em>(changelog)</em></td>
-                        </tr>
-                        <tr>
-                            <td><code>draft</code></td>
-                            <td>Create draft release</td>
-                            <td><code>false</code></td>
-                        </tr>
-                        <tr>
-                            <td><code>prerelease</code></td>
-                            <td>Mark as prerelease</td>
-                            <td><code>false</code></td>
-                        </tr>
-                        <tr>
-                            <td><code>make-latest</code></td>
-                            <td>Mark as latest release</td>
-                            <td><code>true</code></td>
-                        </tr>
-                        <tr>
-                            <td><code>generate-release-notes</code></td>
-                            <td>Use GitHub's automatic release notes</td>
-                            <td><code>false</code></td>
-                        </tr>
-                        <tr>
-                            <td><code>artifacts</code></td>
-                            <td>Newline-delimited list of artifact paths</td>
-                            <td><em>(none)</em></td>
-                        </tr>
-                        <tr>
-                            <td><code>artifact-content-type</code></td>
-                            <td>Content type for artifacts</td>
-                            <td><code>application/octet-stream</code></td>
-                        </tr>
-                        <tr>
-                            <td><code>commit</code></td>
-                            <td>Commit to tag for release</td>
-                            <td><em>(current)</em></td>
-                        </tr>
-                        <tr>
-                            <td><code>discussion-category-name</code></td>
-                            <td>Create discussion in specified category</td>
-                            <td><em>(none)</em></td>
-                        </tr>
-                        <tr>
-                            <td><code>token</code></td>
-                            <td>GitHub token for releases</td>
-                            <td><code>${{ github.token }}</code></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="section">
-                <h2>Outputs</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Output</th>
-                            <th>Description</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><code>changelog</code></td>
-                            <td>Generated changelog content</td>
-                        </tr>
-                        <tr>
-                            <td><code>changelog-file</code></td>
-                            <td>Path to changelog file (<code>CHANGELOG.md</code>)</td>
-                        </tr>
-                        <tr>
-                            <td><code>from-tag</code></td>
-                            <td>Tag used as starting point</td>
-                        </tr>
-                        <tr>
-                            <td><code>to-tag</code></td>
-                            <td>Tag used as ending point</td>
-                        </tr>
-                        <tr>
-                            <td><code>new-tag</code></td>
-                            <td>New tag created (if <code>create-tag: true</code>)</td>
-                        </tr>
-                        <tr>
-                            <td><code>release-url</code></td>
-                            <td>URL of created release</td>
-                        </tr>
-                        <tr>
-                            <td><code>release-id</code></td>
-                            <td>ID of created release</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="section">
-                <h2>Full Example</h2>
-                <div class="code-block"><span class="key">name</span>: <span class="value">Release</span>
+        <h3 style="margin-top: 3rem; font-size: 1.8rem; color: #333">
+          Full Example Workflow
+        </h3>
+        <div class="code-block"><span class="key">name</span>: <span class="value">Release</span>
 
 <span class="key">on</span>:
   <span class="key">push</span>:
@@ -446,14 +397,225 @@
           <span class="key">format</span>: <span class="value">grouped</span>
           <span class="key">create-tag</span>: <span class="value">true</span>
           <span class="key">create-release</span>: <span class="value">true</span>
-          <span class="key">release-name</span>: <span class="value">"v{tag}"</span></div>
-            </div>
-        </div>
+      </div>
+    </section>
 
-        <div class="links">
-            <a href="https://github.com/starburst997/commits-logs" target="_blank">View on GitHub</a>
-            <a href="https://github.com/marketplace/actions/commits-log-release" target="_blank">GitHub Marketplace</a>
-        </div>
-    </div>
-</body>
+    <section class="usage-section">
+      <div class="container">
+        <h2 class="section-title">Changelog Output</h2>
+        <p class="section-subtitle">See what the generated changelogs look like</p>
+
+        <h3 style="margin-top: 3rem; font-size: 1.8rem; color: #333">
+          Simple Format
+        </h3>
+        <div class="code-block">## Changes
+
+- Add user authentication (a1b2c3d)
+- Fix login bug (e4f5g6h)
+- Update documentation (i7j8k9l)</div>
+
+        <h3 style="margin-top: 3rem; font-size: 1.8rem; color: #333">
+          Grouped Format
+        </h3>
+        <div class="code-block">## Changes
+
+### Features
+
+- user authentication (a1b2c3d)
+- two-factor auth support (m1n2o3p)
+
+### Bug Fixes
+
+- login redirect issue (e4f5g6h)
+- session timeout bug (q4r5s6t)
+
+### Documentation
+
+- API usage guide (i7j8k9l)
+
+### Other Changes
+
+- Refactor auth module (u7v8w9x)</div>
+      </div>
+    </section>
+
+    <section class="docs-section">
+      <div class="container">
+        <h2 class="section-title">Documentation</h2>
+        <p class="section-subtitle">Complete reference for all inputs and outputs</p>
+
+        <h3 style="margin-top: 3rem; font-size: 1.8rem; color: #333">
+          Inputs
+        </h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Input</th>
+              <th>Description</th>
+              <th>Default</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>from-tag</code></td>
+              <td>Starting tag (auto-detects latest vX.Y.Z if not provided)</td>
+              <td><em>(auto)</em></td>
+            </tr>
+            <tr>
+              <td><code>to-tag</code></td>
+              <td>Ending tag/ref</td>
+              <td><code>HEAD</code></td>
+            </tr>
+            <tr>
+              <td><code>format</code></td>
+              <td>Changelog format: <code>simple</code> or <code>grouped</code></td>
+              <td><code>simple</code></td>
+            </tr>
+            <tr>
+              <td><code>include-merge-commits</code></td>
+              <td>Include merge commits in changelog</td>
+              <td><code>false</code></td>
+            </tr>
+            <tr>
+              <td><code>changelog-title</code></td>
+              <td>Title for the changelog section</td>
+              <td><code>## Changes</code></td>
+            </tr>
+            <tr>
+              <td><code>create-tag</code></td>
+              <td>Create a new tag (auto-increments from latest)</td>
+              <td><code>false</code></td>
+            </tr>
+            <tr>
+              <td><code>version-bump</code></td>
+              <td>Version bump type: <code>patch</code>, <code>minor</code>, or <code>major</code></td>
+              <td><code>patch</code></td>
+            </tr>
+            <tr>
+              <td><code>new-tag</code></td>
+              <td>Tag name for new release (auto-increments if not provided)</td>
+              <td><em>(auto)</em></td>
+            </tr>
+            <tr>
+              <td><code>create-release</code></td>
+              <td>Create a GitHub release</td>
+              <td><code>false</code></td>
+            </tr>
+            <tr>
+              <td><code>release-name</code></td>
+              <td>Release name (supports <code>{tag}</code> variable)</td>
+              <td><code>Release {tag}</code></td>
+            </tr>
+            <tr>
+              <td><code>release-body</code></td>
+              <td>Custom release body (uses changelog if empty)</td>
+              <td><em>(changelog)</em></td>
+            </tr>
+            <tr>
+              <td><code>draft</code></td>
+              <td>Create draft release</td>
+              <td><code>false</code></td>
+            </tr>
+            <tr>
+              <td><code>prerelease</code></td>
+              <td>Mark as prerelease</td>
+              <td><code>false</code></td>
+            </tr>
+            <tr>
+              <td><code>make-latest</code></td>
+              <td>Mark as latest release</td>
+              <td><code>true</code></td>
+            </tr>
+            <tr>
+              <td><code>generate-release-notes</code></td>
+              <td>Use GitHub's automatic release notes</td>
+              <td><code>false</code></td>
+            </tr>
+            <tr>
+              <td><code>artifacts</code></td>
+              <td>Newline-delimited list of artifact paths</td>
+              <td><em>(none)</em></td>
+            </tr>
+            <tr>
+              <td><code>artifact-content-type</code></td>
+              <td>Content type for artifacts</td>
+              <td><code>application/octet-stream</code></td>
+            </tr>
+            <tr>
+              <td><code>commit</code></td>
+              <td>Commit to tag for release</td>
+              <td><em>(current)</em></td>
+            </tr>
+            <tr>
+              <td><code>discussion-category-name</code></td>
+              <td>Create discussion in specified category</td>
+              <td><em>(none)</em></td>
+            </tr>
+            <tr>
+              <td><code>token</code></td>
+              <td>GitHub token for releases</td>
+              <td><code>${{ github.token }}</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 style="margin-top: 3rem; font-size: 1.8rem; color: #333">
+          Outputs
+        </h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Output</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>changelog</code></td>
+              <td>Generated changelog content</td>
+            </tr>
+            <tr>
+              <td><code>changelog-file</code></td>
+              <td>Path to changelog file (<code>CHANGELOG.md</code>)</td>
+            </tr>
+            <tr>
+              <td><code>from-tag</code></td>
+              <td>Tag used as starting point</td>
+            </tr>
+            <tr>
+              <td><code>to-tag</code></td>
+              <td>Tag used as ending point</td>
+            </tr>
+            <tr>
+              <td><code>new-tag</code></td>
+              <td>New tag created (if <code>create-tag: true</code>)</td>
+            </tr>
+            <tr>
+              <td><code>release-url</code></td>
+              <td>URL of created release</td>
+            </tr>
+            <tr>
+              <td><code>release-id</code></td>
+              <td>ID of created release</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      <div class="container">
+        <p>
+          <a href="https://github.com/starburst997/commits-logs">GitHub</a> •
+          <a href="https://github.com/starburst997/commits-logs/issues"
+            >Issues</a
+          >
+          •
+          <a href="https://github.com/marketplace/actions/commits-log-release"
+            >Marketplace</a
+          >
+        </p>
+      </div>
+    </footer>
+  </body>
 </html>
