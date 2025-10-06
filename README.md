@@ -206,13 +206,27 @@ Groups commits by conventional commit prefixes:
 
 ## Requirements
 
-Your workflow must checkout with full history:
+### Full History (Recommended)
+
+For complete changelogs, checkout with full history:
 
 ```yaml
 - uses: actions/checkout@v4
   with:
     fetch-depth: 0
 ```
+
+### Shallow Clone Support
+
+The action also works with shallow clones, using whatever commit history is available:
+
+```yaml
+- uses: actions/checkout@v4
+  with:
+    fetch-depth: 100  # Last 100 commits
+```
+
+**Note:** If tags are outside the shallow history, the action will generate a changelog from available commits only (with a warning). This is acceptable for most use cases where 50-100 commits cover the release.
 
 ## License
 

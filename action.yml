@@ -247,8 +247,14 @@ runs:
           echo "No previous tag found, using all commits"
           RANGE="$TO_TAG"
         else
-          echo "Getting commits from $FROM_TAG to $TO_TAG"
-          RANGE="${FROM_TAG}..${TO_TAG}"
+          # Check if FROM_TAG is reachable (works with shallow clones)
+          if git rev-parse "$FROM_TAG" >/dev/null 2>&1; then
+            echo "Getting commits from $FROM_TAG to $TO_TAG"
+            RANGE="${FROM_TAG}..${TO_TAG}"
+          else
+            echo "⚠️  Warning: Tag $FROM_TAG not in shallow clone history, using available commits up to $TO_TAG"
+            RANGE="$TO_TAG"
+          fi
         fi
 
         # Build git log command
@@ -257,7 +263,7 @@ runs:
           NO_MERGES="--no-merges"
         fi
 
-        # Get commits
+        # Get commits (with error handling for shallow clones)
         if [ "$FORMAT" = "grouped" ]; then
           # Grouped format (by conventional commit type)
           COMMITS=$(git log $RANGE --pretty=format:"%s|%h" $NO_MERGES | awk -F'|' '
