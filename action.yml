@@ -91,6 +91,11 @@ inputs:
     required: false
     default: "false"
 
+  auto-pick-notes:
+    description: "Automatically choose between GitHub's generateReleaseNotes (if PRs detected) or custom changelog (if no PRs). Overrides generate-release-notes when true."
+    required: false
+    default: "false"
+
   artifacts:
     description: "Newline-delimited list of artifact paths to upload"
     required: false
@@ -331,6 +336,34 @@ runs:
           echo 'EOF'
         } >> $GITHUB_OUTPUT
 
+    - name: Detect PR merges
+      id: detect-prs
+      if: inputs.auto-pick-notes == 'true'
+      shell: bash
+      run: |
+        # Determine commit range (same logic as generate step)
+        if [ -z "$FROM_TAG" ]; then
+          echo "No previous tag found, using all commits"
+          RANGE="$TO_TAG"
+        else
+          if git rev-parse "$FROM_TAG" >/dev/null 2>&1; then
+            RANGE="${FROM_TAG}..${TO_TAG}"
+          else
+            RANGE="$TO_TAG"
+          fi
+        fi
+
+        # Check for PR merge commits (GitHub creates commits with "Merge pull request #" pattern)
+        PR_MERGES=$(git log $RANGE --merges --oneline --grep="Merge pull request #" 2>/dev/null || echo "")
+
+        if [ -n "$PR_MERGES" ]; then
+          echo "Found PR merge commits in range"
+          echo "has_prs=true" >> $GITHUB_OUTPUT
+        else
+          echo "No PR merge commits found in range"
+          echo "has_prs=false" >> $GITHUB_OUTPUT
+        fi
+
     - name: Create new tag
       id: create-new-tag
       if: inputs.create-tag == 'true'
@@ -400,11 +433,11 @@ runs:
         token: ${{ inputs.token }}
         tag: ${{ steps.create-new-tag.outputs.new_tag || inputs.to-tag || steps.get-tags.outputs.to_tag }}
         name: ${{ inputs.release-name != '' && inputs.release-name || format('Release {0}', steps.create-new-tag.outputs.release_tag || steps.get-tags.outputs.release_tag) }}
-        body: ${{ inputs.release-body != '' && inputs.release-body || steps.generate.outputs.changelog }}
+        body: ${{ inputs.release-body != '' && inputs.release-body || (inputs.auto-pick-notes == 'true' && steps.detect-prs.outputs.has_prs == 'true' && '' || steps.generate.outputs.changelog) }}
         draft: ${{ inputs.draft }}
         prerelease: ${{ inputs.prerelease }}
         makeLatest: ${{ inputs.make-latest }}
-        generateReleaseNotes: ${{ inputs.generate-release-notes }}
+        generateReleaseNotes: ${{ inputs.auto-pick-notes == 'true' && steps.detect-prs.outputs.has_prs == 'true' || inputs.generate-release-notes == 'true' }}
         artifacts: ${{ inputs.artifacts }}
         artifactContentType: ${{ inputs.artifact-content-type }}
         commit: ${{ inputs.commit }}
