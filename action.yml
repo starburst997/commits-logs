@@ -189,9 +189,21 @@ runs:
               FROM_TAG=""
               TO_TAG="HEAD"
             elif [ -z "$PREVIOUS_TAG" ]; then
-              echo "Only one tag found, using all commits up to HEAD"
-              FROM_TAG="$LATEST_TAG"
-              TO_TAG="HEAD"
+              # Only one tag exists - check if it's at HEAD
+              LATEST_TAG_SHA=$(git rev-parse "$LATEST_TAG" 2>/dev/null)
+              HEAD_SHA=$(git rev-parse HEAD)
+
+              if [ "$LATEST_TAG_SHA" = "$HEAD_SHA" ]; then
+                # First tag is at HEAD, show all commits up to this tag
+                echo "First release detected, using all commits up to $LATEST_TAG"
+                FROM_TAG=""
+                TO_TAG="$LATEST_TAG"
+              else
+                # First tag exists but HEAD has moved beyond it
+                echo "Only one tag found, using commits from $LATEST_TAG to HEAD"
+                FROM_TAG="$LATEST_TAG"
+                TO_TAG="HEAD"
+              fi
             else
               # Check if latest tag points to HEAD
               LATEST_TAG_SHA=$(git rev-parse "$LATEST_TAG" 2>/dev/null)
