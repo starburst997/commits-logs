@@ -70,28 +70,29 @@ jobs:
 
 ## Inputs
 
-| Input                   | Description                                               | Default         |
-| ----------------------- | --------------------------------------------------------- | --------------- |
-| `from-tag`              | Starting tag (auto-detects latest vX.Y.Z if not provided) | _(auto)_        |
-| `to-tag`                | Ending tag/ref                                            | `HEAD`          |
-| `format`                | `simple` or `grouped`                                     | `simple`        |
-| `include-merge-commits` | Include merge commits                                     | `false`         |
-| `changelog-title`       | Changelog title                                           | `## Changes`    |
-| `create-tag`            | Create a new tag                                          | `false`         |
-| `version-bump`          | Version bump type: `patch`, `minor`, or `major`           | `patch`         |
-| `new-tag`               | Tag name (auto-increments if not provided)                | _(auto)_        |
-| `create-release`        | Create GitHub release                                     | `false`         |
-| `release-name`          | Release name (supports `{tag}` variable)                  | `Release {tag}` |
-| `release-body`          | Custom release body (uses changelog if empty)             | _(changelog)_   |
-| `draft`                 | Create draft release                                      | `false`         |
-| `prerelease`            | Mark as prerelease                                        | `false`         |
-| `make-latest`           | Mark as latest                                            | `true`          |
-| `generate-release-notes`| Use GitHub's automatic release notes                      | `false`         |
-| `artifacts`             | Newline-delimited list of artifact paths                  | _(none)_        |
-| `artifact-content-type` | Content type for artifacts                                | `application/octet-stream` |
-| `commit`                | Commit to tag for release                                 | _(current)_     |
-| `discussion-category-name` | Create discussion in specified category                | _(none)_        |
-| `token`                 | GitHub token for releases                                 | `${{ github.token }}` |
+| Input                      | Description                                                                                                                                               | Default                    |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| `from-tag`                 | Starting tag (auto-detects latest vX.Y.Z if not provided)                                                                                                 | _(auto)_                   |
+| `to-tag`                   | Ending tag/ref                                                                                                                                            | `HEAD`                     |
+| `format`                   | `simple` or `grouped`                                                                                                                                     | `grouped`                  |
+| `include-merge-commits`    | Include merge commits                                                                                                                                     | `false`                    |
+| `changelog-title`          | Changelog title                                                                                                                                           | `## Changes`               |
+| `create-tag`               | Create a new tag                                                                                                                                          | `false`                    |
+| `version-bump`             | Version bump type: `patch`, `minor`, or `major`                                                                                                           | `patch`                    |
+| `new-tag`                  | Tag name (auto-increments if not provided)                                                                                                                | _(auto)_                   |
+| `create-release`           | Create GitHub release                                                                                                                                     | `true`                     |
+| `release-name`             | Release name (supports `{tag}` variable)                                                                                                                  | `Release {tag}`            |
+| `release-body`             | Custom release body (uses changelog if empty)                                                                                                             | _(changelog)_              |
+| `draft`                    | Create draft release                                                                                                                                      | `false`                    |
+| `prerelease`               | Mark as prerelease                                                                                                                                        | `false`                    |
+| `make-latest`              | Mark as latest                                                                                                                                            | `true`                     |
+| `generate-release-notes`   | Use GitHub's automatic release notes                                                                                                                      | `false`                    |
+| `auto-pick-notes`          | Automatically choose between GitHub's generateReleaseNotes (if PRs detected) or custom changelog (if no PRs). Overrides generate-release-notes when true. | `true`                     |
+| `artifacts`                | Newline-delimited list of artifact paths                                                                                                                  | _(none)_                   |
+| `artifact-content-type`    | Content type for artifacts                                                                                                                                | `application/octet-stream` |
+| `commit`                   | Commit to tag for release                                                                                                                                 | _(current)_                |
+| `discussion-category-name` | Create discussion in specified category                                                                                                                   | _(none)_                   |
+| `token`                    | GitHub token for releases                                                                                                                                 | `${{ github.token }}`      |
 
 ## Outputs
 
@@ -227,7 +228,7 @@ The action also works with shallow clones, using whatever commit history is avai
 ```yaml
 - uses: actions/checkout@v4
   with:
-    fetch-depth: 100  # Last 100 commits
+    fetch-depth: 100 # Last 100 commits
 ```
 
 **Note:** If tags are outside the shallow history, the action will generate a changelog from available commits only (with a warning). This is acceptable for most use cases where 50-100 commits cover the release.

@@ -22,7 +22,7 @@ inputs:
   format:
     description: 'Changelog format: "simple" (one line per commit) or "grouped" (grouped by type)'
     required: false
-    default: "simple"
+    default: "grouped"
 
   include-merge-commits:
     description: "Include merge commits in changelog"
@@ -53,7 +53,7 @@ inputs:
   create-release:
     description: "Create a GitHub release"
     required: false
-    default: "false"
+    default: "true"
 
   token:
     description: "GitHub token for creating releases"
@@ -94,7 +94,7 @@ inputs:
   auto-pick-notes:
     description: "Automatically choose between GitHub's generateReleaseNotes (if PRs detected) or custom changelog (if no PRs). Overrides generate-release-notes when true."
     required: false
-    default: "false"
+    default: "true"
 
   artifacts:
     description: "Newline-delimited list of artifact paths to upload"
