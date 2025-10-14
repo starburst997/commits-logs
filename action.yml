@@ -361,9 +361,9 @@ runs:
           # Simple format
           # Handle empty RANGE (for getting all commits)
           if [ -z "$RANGE" ]; then
-            COMMITS=$(eval "git log --pretty=format:'- %s (%h)' $NO_MERGES $EXCLUDE_FILTER")
+            COMMITS=$(eval "git log --pretty=format:"- %s (%h)" $NO_MERGES $EXCLUDE_FILTER")
           else
-            COMMITS=$(eval "git log $RANGE --pretty=format:'- %s (%h)' $NO_MERGES $EXCLUDE_FILTER")
+            COMMITS=$(eval "git log $RANGE --pretty=format:"- %s (%h)" $NO_MERGES $EXCLUDE_FILTER")
           fi
         fi
 
