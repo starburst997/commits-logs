@@ -269,7 +269,16 @@ runs:
         # Determine commit range
         if [ -z "$FROM_TAG" ]; then
           echo "No previous tag found, using all commits"
-          RANGE="$TO_TAG"
+          # When there's no FROM_TAG, we need to get ALL commits up to TO_TAG
+          # Using just TO_TAG might not work correctly, so we explicitly specify
+          # we want all commits by omitting the range start
+          if [ "$TO_TAG" = "HEAD" ]; then
+            # For HEAD, just use no range to get all commits
+            RANGE=""
+          else
+            # For a specific tag, get all commits up to that tag
+            RANGE="$TO_TAG"
+          fi
         else
           # Check if FROM_TAG is reachable (works with shallow clones)
           if git rev-parse "$FROM_TAG" >/dev/null 2>&1; then
@@ -290,7 +299,14 @@ runs:
         # Get commits (with error handling for shallow clones)
         if [ "$FORMAT" = "grouped" ]; then
           # Grouped format (by conventional commit type)
-          COMMITS=$(git log $RANGE --pretty=format:"%s|%h" $NO_MERGES | awk -F'|' '
+          # Build the git log command based on whether we have a range
+          if [ -z "$RANGE" ]; then
+            GIT_LOG_CMD="git log --pretty=format:\"%s|%h\" $NO_MERGES"
+          else
+            GIT_LOG_CMD="git log $RANGE --pretty=format:\"%s|%h\" $NO_MERGES"
+          fi
+
+          COMMITS=$($GIT_LOG_CMD | awk -F'|' '
             BEGIN {
               features=""
               fixes=""
@@ -322,7 +338,12 @@ runs:
           ')
         else
           # Simple format
-          COMMITS=$(git log $RANGE --pretty=format:"- %s (%h)" $NO_MERGES)
+          # Handle empty RANGE (for getting all commits)
+          if [ -z "$RANGE" ]; then
+            COMMITS=$(git log --pretty=format:"- %s (%h)" $NO_MERGES)
+          else
+            COMMITS=$(git log $RANGE --pretty=format:"- %s (%h)" $NO_MERGES)
+          fi
         fi
 
         # Handle no commits case
@@ -356,7 +377,12 @@ runs:
         # Determine commit range (same logic as generate step)
         if [ -z "$FROM_TAG" ]; then
           echo "No previous tag found, using all commits"
-          RANGE="$TO_TAG"
+          # Match the logic from generate step
+          if [ "$TO_TAG" = "HEAD" ]; then
+            RANGE=""
+          else
+            RANGE="$TO_TAG"
+          fi
         else
           if git rev-parse "$FROM_TAG" >/dev/null 2>&1; then
             RANGE="${FROM_TAG}..${TO_TAG}"
@@ -366,7 +392,11 @@ runs:
         fi
 
         # Check for PR merge commits (GitHub creates commits with "Merge pull request #" pattern)
-        PR_MERGES=$(git log $RANGE --merges --oneline --grep="Merge pull request #" 2>/dev/null || echo "")
+        if [ -z "$RANGE" ]; then
+          PR_MERGES=$(git log --merges --oneline --grep="Merge pull request #" 2>/dev/null || echo "")
+        else
+          PR_MERGES=$(git log $RANGE --merges --oneline --grep="Merge pull request #" 2>/dev/null || echo "")
+        fi
 
         if [ -n "$PR_MERGES" ]; then
           echo "Found PR merge commits in range"
