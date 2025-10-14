@@ -474,7 +474,7 @@ runs:
       with:
         token: ${{ inputs.token }}
         tag: ${{ steps.create-new-tag.outputs.new_tag || inputs.to-tag || steps.get-tags.outputs.to_tag }}
-        name: ${{ inputs.release-name != '' && inputs.release-name || format('Release {0}', steps.create-new-tag.outputs.release_tag || steps.get-tags.outputs.release_tag) }}
+        name: ${{ inputs.release-name != '' && inputs.release-name || format('v{0}', steps.create-new-tag.outputs.release_tag || steps.get-tags.outputs.release_tag) }}
         body: ${{ inputs.release-body != '' && inputs.release-body || (inputs.auto-pick-notes == 'true' && steps.detect-prs.outputs.has_prs == 'true' && '' || steps.generate.outputs.changelog) }}
         draft: ${{ inputs.draft }}
         prerelease: ${{ inputs.prerelease }}
