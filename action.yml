@@ -301,9 +301,9 @@ runs:
           # Grouped format (by conventional commit type)
           # Build the git log command based on whether we have a range
           if [ -z "$RANGE" ]; then
-            GIT_LOG_CMD="git log --pretty=format:\"%s|%h\" $NO_MERGES"
+            GIT_LOG_CMD="git log --pretty=format:%s|%h $NO_MERGES"
           else
-            GIT_LOG_CMD="git log $RANGE --pretty=format:\"%s|%h\" $NO_MERGES"
+            GIT_LOG_CMD="git log $RANGE --pretty=format:%s|%h $NO_MERGES"
           fi
 
           COMMITS=$($GIT_LOG_CMD | awk -F'|' '
