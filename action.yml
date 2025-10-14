@@ -60,6 +60,11 @@ inputs:
     required: false
     default: "true"
 
+  git-push:
+    description: "Push commits and tags to remote repository"
+    required: false
+    default: "false"
+
   token:
     description: "GitHub token for creating releases"
     required: false
@@ -482,6 +487,14 @@ runs:
         # Output tag with and without 'v' prefix
         echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
         echo "release_tag=${NEW_TAG#v}" >> $GITHUB_OUTPUT
+
+    - name: Push commits and tags
+      if: inputs.git-push == 'true'
+      shell: bash
+      run: |
+        echo "Pushing commits and tags to remote repository..."
+        git push --follow-tags
+        echo "Successfully pushed commits and tags"
 
     - name: Create release
       id: release
