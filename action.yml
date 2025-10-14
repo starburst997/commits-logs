@@ -492,9 +492,15 @@ runs:
       if: inputs.git-push == 'true'
       shell: bash
       run: |
-        echo "Pushing commits and tags to remote repository..."
-        git push --follow-tags
-        echo "Successfully pushed commits and tags"
+        echo "🚀 Pushing all changes and tags to remote repository"
+
+        # Push tags only
+        git push --force origin --tags
+
+        # Push all changes
+        git push
+
+        echo "✅ Successfully pushed all changes and tags"
 
     - name: Create release
       id: release
