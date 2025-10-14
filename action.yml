@@ -183,6 +183,10 @@ runs:
             # Auto-detect based on whether HEAD is tagged
             LATEST_TAG=$(echo "$ALL_TAGS" | tail -n 1)
             PREVIOUS_TAG=$(echo "$ALL_TAGS" | tail -n 2 | head -n 1)
+            # Fix: When there's only one tag, PREVIOUS_TAG equals LATEST_TAG, so set it to empty
+            if [ "$PREVIOUS_TAG" = "$LATEST_TAG" ]; then
+              PREVIOUS_TAG=""
+            fi
 
             if [ -z "$LATEST_TAG" ]; then
               echo "No vX.Y.Z tags found, using all commits"
