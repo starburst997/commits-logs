@@ -28,6 +28,7 @@ jobs:
         uses: starburst997/auto-version@v1
         with:
           update-major-minor: true
+          git-config: false
 
       - name: Generate changelog and create release
         uses: ./
