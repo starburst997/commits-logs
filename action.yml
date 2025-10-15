@@ -505,7 +505,7 @@ runs:
     - name: Create release
       id: release
       if: inputs.create-release == 'true'
-      uses: ncipollo/release-action@v1
+      uses: starburst997/release-action@v1
       with:
         token: ${{ inputs.token }}
         tag: ${{ steps.create-new-tag.outputs.new_tag || inputs.to-tag || steps.get-tags.outputs.to_tag }}
