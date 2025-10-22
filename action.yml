@@ -172,8 +172,9 @@ runs:
         # Fetch all tags
         git fetch --tags --quiet 2>/dev/null || true
 
-        # Get all tags matching vX.Y.Z format, sorted by version
-        ALL_TAGS=$(git tag -l "v*.*.*" | sort -V)
+        # Get all tags matching vX.Y.Z format, sorted by commit date (most recent last)
+        # Using git tag --sort=creatordate to get tags in chronological order
+        ALL_TAGS=$(git tag -l "v*.*.*" --sort=creatordate)
 
         # Determine FROM and TO tags based on create-tag setting
         if [ "$CREATE_TAG" = "false" ]; then
@@ -435,8 +436,8 @@ runs:
         INPUT_NEW_TAG: ${{ inputs.new-tag }}
         VERSION_BUMP: ${{ inputs.version-bump }}
       run: |
-        # Get all tags matching vX.Y.Z format, sorted by version
-        ALL_TAGS=$(git tag -l "v*.*.*" | sort -V)
+        # Get all tags matching vX.Y.Z format, sorted by commit date (most recent last)
+        ALL_TAGS=$(git tag -l "v*.*.*" --sort=creatordate)
         LATEST_TAG=$(echo "$ALL_TAGS" | tail -n 1)
 
         # Determine new tag
