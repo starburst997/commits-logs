@@ -414,17 +414,26 @@ runs:
         fi
 
         # Check for PR merge commits (GitHub creates commits with "Merge pull request #" pattern)
+        # Exclude dev→main merges (if HEAD is a dev merge, don't count it)
         if [ -z "$RANGE" ]; then
           PR_MERGES=$(git log --merges --oneline --grep="Merge pull request #" 2>/dev/null || echo "")
         else
           PR_MERGES=$(git log $RANGE --merges --oneline --grep="Merge pull request #" 2>/dev/null || echo "")
         fi
 
+        # Check if HEAD is a dev→main merge and exclude it from the count
+        HEAD_COMMIT_MSG=$(git log -1 --pretty=%s HEAD 2>/dev/null || echo "")
+        if echo "$HEAD_COMMIT_MSG" | grep -q "Merge pull request #.* from .*/dev"; then
+          echo "HEAD is a dev→main merge, excluding it from PR detection"
+          # Remove the first line (HEAD commit) from PR_MERGES
+          PR_MERGES=$(echo "$PR_MERGES" | tail -n +2)
+        fi
+
         if [ -n "$PR_MERGES" ]; then
-          echo "Found PR merge commits in range"
+          echo "Found PR merge commits in range (excluding dev→main)"
           echo "has_prs=true" >> $GITHUB_OUTPUT
         else
-          echo "No PR merge commits found in range"
+          echo "No PR merge commits found in range (excluding dev→main)"
           echo "has_prs=false" >> $GITHUB_OUTPUT
         fi
 
