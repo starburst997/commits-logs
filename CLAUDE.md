@@ -76,3 +76,20 @@ The repository uses its own action for releases (`.github/workflows/release.yml`
 - No separate source files or build process
 - Must work in GitHub Actions environment only
 - Depends on `ncipollo/release-action@v1` for release creation
+
+## Documentation Requirements
+
+**CRITICAL**: When adding or modifying inputs/outputs in `action.yml`, you MUST update ALL of the following documentation files:
+
+1. **README.md** - Update the inputs/outputs tables with:
+   - Parameter name and type
+   - Description
+   - Default value
+   - Whether it's required
+
+2. **index.html** - Update the documentation page with:
+   - Input/output descriptions in the appropriate sections
+   - Code examples showing usage of new parameters
+   - Any relevant notes about behavior or constraints
+
+**Never** add or modify inputs/outputs in `action.yml` without updating both README.md and index.html in the same change. The documentation must always stay synchronized with the code.
