@@ -39,6 +39,11 @@ inputs:
     required: false
     default: "chore: update version"
 
+  full-changelog:
+    description: "Add full changelog URL at the end of changelog"
+    required: false
+    default: "true"
+
   # Release inputs
   create-tag:
     description: "Create a new tag (auto-increments from latest tag)"
@@ -281,6 +286,7 @@ runs:
         INCLUDE_MERGE: ${{ inputs.include-merge-commits }}
         CHANGELOG_TITLE: ${{ inputs.changelog-title }}
         EXCLUDE_COMMITS: ${{ inputs.exclude-commits }}
+        FULL_CHANGELOG: ${{ inputs.full-changelog }}
       run: |
         # Determine commit range
         if [ -z "$FROM_TAG" ]; then
@@ -376,6 +382,24 @@ runs:
         # Create changelog
         CHANGELOG="${CHANGELOG_TITLE}
         ${COMMITS}"
+
+        # Add full changelog link if enabled
+        if [ "$FULL_CHANGELOG" = "true" ]; then
+          if [ -n "$FROM_TAG" ] && [ "$TO_TAG" != "HEAD" ]; then
+            CHANGELOG="${CHANGELOG}
+
+        **Full Changelog**: https://github.com/${{ github.repository }}/compare/${FROM_TAG}...${TO_TAG}"
+          elif [ -n "$FROM_TAG" ] && [ "$TO_TAG" = "HEAD" ]; then
+            CHANGELOG="${CHANGELOG}
+
+        **Full Changelog**: https://github.com/${{ github.repository }}/compare/${FROM_TAG}...HEAD"
+          elif [ -z "$FROM_TAG" ] && [ "$TO_TAG" != "HEAD" ]; then
+            # No FROM_TAG, show all commits from beginning up to TO_TAG
+            CHANGELOG="${CHANGELOG}
+
+        **Full Changelog**: https://github.com/${{ github.repository }}/compare/${TO_TAG}"
+          fi
+        fi
 
         # Save to file
         echo "$CHANGELOG" > CHANGELOG.md
