@@ -8,6 +8,7 @@ Generate changelogs from commits between releases and optionally create GitHub r
 - 📝 **Changelog Generation** - Generate from commits between two tags
 - 🚀 **Optional Release Creation** - Create GitHub releases with generated changelog
 - 📊 **Two Formats** - Simple list or grouped by conventional commit types
+- 📋 **Draft Release Detection** - Automatically detects and publishes draft releases
 
 ## Quick Start
 
@@ -188,6 +189,20 @@ Groups commits by conventional commit prefixes:
 
 ## How It Works
 
+**Draft Release Detection:**
+
+Before generating a new release, the action automatically checks for existing draft releases:
+
+1. Looks for draft releases with titles matching the current version pattern (e.g., `vX.Y` for a `vX.Y.Z` tag)
+2. If a matching draft is found:
+   - Publishes the draft release (removes draft status)
+   - Updates the release title to the full version (e.g., `v1.2.3`)
+   - Updates the release tag to match the latest tag
+   - Skips changelog generation and release creation steps
+3. If no draft is found, proceeds with normal changelog generation and release creation
+
+This feature is useful for workflows where you maintain a draft release and want to publish it when a new tag is created.
+
 **When `create-tag: false` (default):**
 
 1. Fetches all tags from the repository
@@ -195,19 +210,21 @@ Groups commits by conventional commit prefixes:
 3. Intelligently detects commit range:
    - **If latest tag = HEAD**: Uses 2 most recent tags (e.g., `v1.0.0..v1.1.0`)
    - **If HEAD has new commits**: Uses latest tag to HEAD (e.g., `v1.1.0..HEAD`)
-4. Generates changelog from detected range
+4. Checks for draft releases (see above)
+5. Generates changelog from detected range (if no draft found)
 
 **When `create-tag: true`:**
 
 1. Fetches all tags from the repository
 2. Filters tags matching `vX.Y.Z` format and sorts by version
 3. Uses latest tag to HEAD
-4. Generates changelog from commits between latest tag and HEAD
-5. Creates new tag with auto-increment:
+4. Checks for draft releases (see above)
+5. Generates changelog from commits between latest tag and HEAD (if no draft found)
+6. Creates new tag with auto-increment:
    - `patch` (default): `v1.2.3` → `v1.2.4`
    - `minor`: `v1.2.3` → `v1.3.0`
    - `major`: `v1.2.3` → `v2.0.0`
-6. Optionally creates GitHub release with changelog
+7. Optionally creates GitHub release with changelog (if no draft found)
 
 ## Requirements
 
