@@ -460,9 +460,6 @@ runs:
         **Full Changelog**: https://github.com/${{ github.repository }}/compare/${FROM_TAG}...HEAD"
           elif [ -z "$FROM_TAG" ] && [ "$TO_TAG" != "HEAD" ]; then
             # No FROM_TAG, show all commits from beginning up to TO_TAG
-            CHANGELOG="${CHANGELOG}
-
-        **Full Changelog**: https://github.com/${{ github.repository }}/compare/${TO_TAG}"
           fi
         fi
 
