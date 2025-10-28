@@ -328,9 +328,17 @@ runs:
         VERSION="${LATEST_TAG#v}"
         DRAFT_TAG="${{ steps.check-draft.outputs.draft_tag }}"
 
-        # Update draft release title, tag, and publish it
-        gh release edit "$DRAFT_TAG" --title "v$VERSION" --tag "v$VERSION" --draft=false
-        echo "Published draft release with updated title and tag: v$VERSION (old tag: $DRAFT_TAG)"
+        # Get current release body
+        CURRENT_BODY=$(gh release view "$DRAFT_TAG" --json body --jq '.body')
+
+        # Modify the Full Changelog line to update the tag to the published version
+        # This matches lines like: **Full Changelog**: https://github.com/owner/repo/compare/v1.6.2...v1.7.37-dev
+        # and converts them to: **Full Changelog**: https://github.com/owner/repo/compare/v1.6.2...v1.7.37
+        UPDATED_BODY=$(echo "$CURRENT_BODY" | sed -E "s|(^\*\*Full Changelog\*\*: .+\.\.\.)v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?$|\1v$VERSION|")
+
+        # Update draft release title, tag, body, and publish it
+        gh release edit "$DRAFT_TAG" --title "v$VERSION" --tag "v$VERSION" --notes "$UPDATED_BODY" --draft=false
+        echo "Published draft release with updated title, tag, and body: v$VERSION (old tag: $DRAFT_TAG)"
 
         # Get release info for outputs
         RELEASE_INFO=$(gh release view "v$VERSION" --json id,url,uploadUrl)
