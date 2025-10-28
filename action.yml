@@ -143,6 +143,10 @@ outputs:
     description: "Tag used as ending point for changelog"
     value: ${{ steps.get-tags.outputs.to_tag }}
 
+  latest-tag:
+    description: "Latest vX.Y.Z tag found in the repository"
+    value: ${{ steps.get-tags.outputs.latest_tag }}
+
   release-tag:
     description: "Tag without 'v' prefix for release name"
     value: ${{ steps.get-tags.outputs.release_tag }}
@@ -153,15 +157,15 @@ outputs:
 
   release-id:
     description: "ID of the created release (only if create-release is true)"
-    value: ${{ steps.release.outputs.id }}
+    value: ${{ steps.publish-draft.outputs.id || steps.release.outputs.id }}
 
   release-url:
     description: "URL of the created release (only if create-release is true)"
-    value: ${{ steps.release.outputs.html_url }}
+    value: ${{ steps.publish-draft.outputs.html_url || steps.release.outputs.html_url }}
 
   release-upload-url:
     description: "Upload URL for the release (only if create-release is true)"
-    value: ${{ steps.release.outputs.upload_url }}
+    value: ${{ steps.publish-draft.outputs.upload_url || steps.release.outputs.upload_url }}
 
 runs:
   using: "composite"
@@ -274,12 +278,73 @@ runs:
         fi
         echo "release_tag=$RELEASE_TAG" >> $GITHUB_OUTPUT
 
+        # Output latest tag for draft check
+        LATEST_TAG=$(echo "$ALL_TAGS" | tail -n 1)
+        echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+
         # Also export for use in next step
         echo "FROM_TAG=$FROM_TAG" >> $GITHUB_ENV
         echo "TO_TAG=$TO_TAG" >> $GITHUB_ENV
 
+    - name: Check for draft release
+      id: check-draft
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        LATEST_TAG: ${{ steps.get-tags.outputs.latest_tag }}
+      run: |
+        if [ -z "$LATEST_TAG" ]; then
+          echo "No tags found, skipping draft check"
+          echo "draft_found=false" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+
+        # Extract version without patch (vX.Y)
+        VERSION_NO_PATCH="v$(echo "${LATEST_TAG#v}" | cut -d. -f1-2)"
+
+        echo "Checking for draft release with title: $VERSION_NO_PATCH"
+
+        # Find draft release with this title
+        DRAFT_TAG=$(gh release list --json tagName,name,isDraft --jq ".[] | select(.isDraft == true and .name == \"$VERSION_NO_PATCH\") | .tagName" || echo "")
+
+        if [ -n "$DRAFT_TAG" ]; then
+          echo "Found draft release: $DRAFT_TAG with title: $VERSION_NO_PATCH"
+          echo "draft_found=true" >> $GITHUB_OUTPUT
+          echo "draft_tag=$DRAFT_TAG" >> $GITHUB_OUTPUT
+          echo "draft_title=$VERSION_NO_PATCH" >> $GITHUB_OUTPUT
+        else
+          echo "No draft release found for $VERSION_NO_PATCH"
+          echo "draft_found=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Publish draft release
+      id: publish-draft
+      if: steps.check-draft.outputs.draft_found == 'true'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        LATEST_TAG: ${{ steps.get-tags.outputs.latest_tag }}
+      run: |
+        VERSION="${LATEST_TAG#v}"
+        DRAFT_TAG="${{ steps.check-draft.outputs.draft_tag }}"
+
+        # Update draft release title, tag, and publish it
+        gh release edit "$DRAFT_TAG" --title "v$VERSION" --tag "v$VERSION" --draft=false
+        echo "Published draft release with updated title and tag: v$VERSION (old tag: $DRAFT_TAG)"
+
+        # Get release info for outputs
+        RELEASE_INFO=$(gh release view "v$VERSION" --json id,url,uploadUrl)
+        RELEASE_ID=$(echo "$RELEASE_INFO" | jq -r '.id')
+        RELEASE_URL=$(echo "$RELEASE_INFO" | jq -r '.url')
+        RELEASE_UPLOAD_URL=$(echo "$RELEASE_INFO" | jq -r '.uploadUrl')
+
+        echo "id=$RELEASE_ID" >> $GITHUB_OUTPUT
+        echo "html_url=$RELEASE_URL" >> $GITHUB_OUTPUT
+        echo "upload_url=$RELEASE_UPLOAD_URL" >> $GITHUB_OUTPUT
+
     - name: Generate changelog
       id: generate
+      if: steps.check-draft.outputs.draft_found != 'true'
       shell: bash
       env:
         FORMAT: ${{ inputs.format }}
@@ -417,7 +482,7 @@ runs:
 
     - name: Detect PR merges
       id: detect-prs
-      if: inputs.auto-pick-notes == 'true'
+      if: steps.check-draft.outputs.draft_found != 'true' && inputs.auto-pick-notes == 'true'
       shell: bash
       run: |
         # Determine commit range (same logic as generate step)
@@ -463,7 +528,7 @@ runs:
 
     - name: Create new tag
       id: create-new-tag
-      if: inputs.create-tag == 'true'
+      if: steps.check-draft.outputs.draft_found != 'true' && inputs.create-tag == 'true'
       shell: bash
       env:
         INPUT_NEW_TAG: ${{ inputs.new-tag }}
@@ -538,7 +603,7 @@ runs:
 
     - name: Create release
       id: release
-      if: inputs.create-release == 'true'
+      if: steps.check-draft.outputs.draft_found != 'true' && inputs.create-release == 'true'
       uses: starburst997/release-action@v1
       with:
         token: ${{ inputs.token }}
